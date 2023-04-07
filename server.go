@@ -2,11 +2,19 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"ociswrapper/ocis"
+	"sync"
 )
+
+var wg sync.WaitGroup
+
+var httpServer = &http.Server{
+	Addr:    ":5000",
+}
 
 func environmentHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPut {
@@ -24,6 +32,8 @@ func environmentHandler(res http.ResponseWriter, req *http.Request) {
 	var environments map[string]any
 	json.Unmarshal(reqBody, &environments)
 
+	ocis.RestartOcisServer(&wg, environments)
+
 	res.WriteHeader(http.StatusOK)
 	res.Header().Set("Content-Type", "application/json")
 
@@ -35,24 +45,35 @@ func environmentHandler(res http.ResponseWriter, req *http.Request) {
 	res.Write(jsonResponse)
 }
 
-func startServer() {
+func startServer(wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	var mux = http.NewServeMux()
 	mux.HandleFunc("/", http.NotFound)
 	mux.HandleFunc("/environment", environmentHandler)
 
-	httpServer := &http.Server{
-		Addr:    ":5000",
-		Handler: mux,
-	}
+	httpServer.Handler = mux
 
 	err := httpServer.ListenAndServe()
 	if err != nil {
-		log.Fatal(err)
-		// os.Exit(1)
+		log.Panic(err)
 	}
 }
 
+func serve(){
+	wg.Add(1)
+	go ocis.StartOcis(&wg, nil)
+	wg.Add(1)
+	go startServer(&wg)
+	wg.Wait()
+}
+
 func main() {
-	ocis.InitOcis()
-	// startServer()
+	out, err := ocis.InitOcis()
+	if err != "" {
+		panic(err)
+	}
+	fmt.Println(out)
+
+	serve()
 }

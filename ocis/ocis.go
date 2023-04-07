@@ -12,10 +12,11 @@ import (
 
 var ocis = "/mnt/workspace/owncloud/ocis/ocis/bin/ocis"
 
-func InitOcis() {
+var ocisCmd *exec.Cmd
+
+func InitOcis() (string, string) {
 	initCmd := exec.Command(ocis, "init", "--insecure", "true")
 	log.Print(initCmd.String())
-	// setting env variables
 	initCmd.Env = os.Environ()
 	// [cleanup] not required
 	initCmd.Env = append(initCmd.Env, "IDM_ADMIN_PASSWORD=admin")
@@ -25,65 +26,58 @@ func InitOcis() {
 	initCmd.Stderr = &err
 	initCmd.Run()
 
-	if err.String() != "" {
-		log.Fatal(err.String())
-	}
-	fmt.Println(out.String())
+	return out.String(), err.String()
 }
 
-func startOcis() {
-	startCmd := exec.Command(ocis, "server")
+func StartOcis(wg *sync.WaitGroup, envMap map[string]any) {
+	defer wg.Done()
+	ocisCmd = exec.Command(ocis, "server")
+	ocisCmd.Env = os.Environ()
+	var environments []string
+	if envMap != nil {
+		for key, value := range(envMap){
+			environments = append(environments, fmt.Sprintf("%s=%s", key, value))
+		}
+	}
+	ocisCmd.Env = append(ocisCmd.Env, environments...)
 
-	stderr, err := startCmd.StderrPipe()
+	stderr, err := ocisCmd.StderrPipe()
 	if err != nil {
 		fmt.Println(err)
 	}
-	stdout, err := startCmd.StdoutPipe()
+	stdout, err := ocisCmd.StdoutPipe()
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	err = startCmd.Start()
+	err = ocisCmd.Start()
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	fmt.Println("Pid: ", startCmd.Process.Pid)
 
 	stderrScanner := bufio.NewScanner(stderr)
 	for stderrScanner.Scan() {
 		m := stderrScanner.Text()
-		// ocisChannel <- m
-		fmt.Println("[OCIS]: ", m)
+		fmt.Println(m)
 	}
 	stdoutScanner := bufio.NewScanner(stdout)
 	for stdoutScanner.Scan() {
 		m := stdoutScanner.Text()
-		// ocisChannel <- m
-		fmt.Println("[OCIS]: ", m)
+		fmt.Println(m)
 	}
-	// get pids of ocis
-	// output, _ := exec.Command("ps", "-o", "pid", "-C", "ocis").Output()
-	// fields := strings.Fields(string(output))
-	// for i := 1; i < len(fields); i++ {
-	// 	fmt.Printf("PID of ocis: %s\n", fields[i])
-	// }
-	// kill after timeout
-	// <-time.After(5 * time.Second)
-	// err := startCmd.Process.Kill()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// fmt.Println("Process killed with PID:", startCmd.Process.Pid)
 }
-func main() {
-	var wg sync.WaitGroup
-	// initOcis()
+
+func stopOcis(){
+	err := ocisCmd.Process.Kill()
+	if err != nil {
+		log.Panic("Cannot kill ocis server")
+	}
+}
+
+func RestartOcisServer(wg *sync.WaitGroup, envMap map[string]any){
+	log.Print("Restarting ocis server...")
+	stopOcis()
 	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		startOcis()
-	}()
-	fmt.Println("Ready to listen requests...")
-	wg.Wait()
+	go StartOcis(wg, envMap)
+	// Todo: wait for ocis to start
 }
