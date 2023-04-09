@@ -3,11 +3,14 @@ package ocis
 import (
 	"bufio"
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"sync"
+	"time"
 )
 
 var ocis = "/mnt/workspace/owncloud/ocis/ocis/bin/ocis"
@@ -74,10 +77,41 @@ func stopOcis(){
 	}
 }
 
-func RestartOcisServer(wg *sync.WaitGroup, envMap map[string]any){
+func WaitForOcis() bool {
+	url := "https://localhost:9200"
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	timeoutValue := 5 * time.Second
+	client := http.Client{
+			Timeout: timeoutValue,
+			Transport: transport,
+	}
+
+	timeout := time.After(timeoutValue)
+
+	for {
+		select {
+		case <-timeout:
+			fmt.Println(fmt.Sprintf("Timeout waiting for ocis server [%f] seconds", timeoutValue.Seconds()))
+			return false
+		default:
+			res, err := client.Get(url)
+			if err != nil {
+				fmt.Println("Waiting for ocis server...")
+			} else {
+				fmt.Println(fmt.Sprintf("Ocis server is ready [%d]", res.StatusCode))
+				return true
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+	}
+}
+
+func RestartOcisServer(wg *sync.WaitGroup, envMap map[string]any) bool {
 	log.Print("Restarting ocis server...")
 	stopOcis()
 	wg.Add(1)
 	go StartOcis(wg, envMap)
-	// Todo: wait for ocis to start
+	return WaitForOcis()
 }

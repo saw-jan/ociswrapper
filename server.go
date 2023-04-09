@@ -32,14 +32,20 @@ func environmentHandler(res http.ResponseWriter, req *http.Request) {
 	var environments map[string]any
 	json.Unmarshal(reqBody, &environments)
 
-	ocis.RestartOcisServer(&wg, environments)
-
-	res.WriteHeader(http.StatusOK)
-	res.Header().Set("Content-Type", "application/json")
+	ocisStatus := ocis.RestartOcisServer(&wg, environments)
 
 	resBody := make(map[string]string)
-	resBody["status"] = "OK"
-	resBody["message"] = "oCIS environment successfully set"
+
+	if ocisStatus {
+		res.WriteHeader(http.StatusOK)
+		resBody["status"] = "OK"
+		resBody["message"] = "oCIS environment successfully set"
+	} else {
+		res.WriteHeader(http.StatusInternalServerError)
+		resBody["status"] = "ERROR"
+		resBody["message"] = "Internal server error"
+	}
+	res.Header().Set("Content-Type", "application/json")
 
 	jsonResponse, _ := json.Marshal(resBody)
 	res.Write(jsonResponse)
@@ -51,6 +57,8 @@ func startServer(wg *sync.WaitGroup) {
 	var mux = http.NewServeMux()
 	mux.HandleFunc("/", http.NotFound)
 	mux.HandleFunc("/environment", environmentHandler)
+	// Todo: create rollback handler that removes the provided envs
+	mux.HandleFunc("/rollback", environmentHandler)
 
 	httpServer.Handler = mux
 
