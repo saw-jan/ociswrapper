@@ -16,7 +16,7 @@ var httpServer = &http.Server{
 	Addr: ":5000",
 }
 
-func environmentHandler(res http.ResponseWriter, req *http.Request) {
+func configHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPut {
 		http.Error(res, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -42,7 +42,32 @@ func environmentHandler(res http.ResponseWriter, req *http.Request) {
 	if ocisStatus {
 		res.WriteHeader(http.StatusOK)
 		resBody["status"] = "OK"
-		resBody["message"] = "oCIS environment successfully set"
+		resBody["message"] = "oCIS server is running with new configurations"
+	} else {
+		res.WriteHeader(http.StatusInternalServerError)
+		resBody["status"] = "ERROR"
+		resBody["message"] = "Internal server error"
+	}
+	res.Header().Set("Content-Type", "application/json")
+
+	jsonResponse, _ := json.Marshal(resBody)
+	res.Write(jsonResponse)
+}
+
+func rollbackHandler(res http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodDelete {
+		http.Error(res, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	ocisStatus := ocis.RestartOcisServer(&wg, nil)
+
+	resBody := make(map[string]string)
+
+	if ocisStatus {
+		res.WriteHeader(http.StatusOK)
+		resBody["status"] = "OK"
+		resBody["message"] = "oCIS server is running"
 	} else {
 		res.WriteHeader(http.StatusInternalServerError)
 		resBody["status"] = "ERROR"
@@ -59,9 +84,8 @@ func startServer(wg *sync.WaitGroup) {
 
 	var mux = http.NewServeMux()
 	mux.HandleFunc("/", http.NotFound)
-	mux.HandleFunc("/environment", environmentHandler)
-	// Todo: create rollback handler that removes the provided envs
-	mux.HandleFunc("/rollback", environmentHandler)
+	mux.HandleFunc("/config", configHandler)
+	mux.HandleFunc("/rollback", rollbackHandler)
 
 	httpServer.Handler = mux
 
