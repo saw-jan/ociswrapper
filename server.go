@@ -13,7 +13,7 @@ import (
 var wg sync.WaitGroup
 
 var httpServer = &http.Server{
-	Addr:    ":5000",
+	Addr: ":5000",
 }
 
 func environmentHandler(res http.ResponseWriter, req *http.Request) {
@@ -30,7 +30,10 @@ func environmentHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	var environments map[string]any
-	json.Unmarshal(reqBody, &environments)
+	err := json.Unmarshal(reqBody, &environments)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	ocisStatus := ocis.RestartOcisServer(&wg, environments)
 
@@ -68,7 +71,7 @@ func startServer(wg *sync.WaitGroup) {
 	}
 }
 
-func serve(){
+func serve() {
 	wg.Add(1)
 	go ocis.StartOcis(&wg, nil)
 	wg.Add(1)

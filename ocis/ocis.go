@@ -38,7 +38,7 @@ func StartOcis(wg *sync.WaitGroup, envMap map[string]any) {
 	ocisCmd.Env = os.Environ()
 	var environments []string
 	if envMap != nil {
-		for key, value := range(envMap){
+		for key, value := range envMap {
 			environments = append(environments, fmt.Sprintf("%s=%s", key, value))
 		}
 	}
@@ -70,7 +70,7 @@ func StartOcis(wg *sync.WaitGroup, envMap map[string]any) {
 	}
 }
 
-func stopOcis(){
+func stopOcis() {
 	err := ocisCmd.Process.Kill()
 	if err != nil {
 		log.Panic("Cannot kill ocis server")
@@ -84,8 +84,8 @@ func WaitForOcis() bool {
 	}
 	timeoutValue := 5 * time.Second
 	client := http.Client{
-			Timeout: timeoutValue,
-			Transport: transport,
+		Timeout:   timeoutValue,
+		Transport: transport,
 	}
 
 	timeout := time.After(timeoutValue)
