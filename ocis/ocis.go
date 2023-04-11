@@ -39,7 +39,7 @@ func StartOcis(wg *sync.WaitGroup, envMap map[string]any) {
 	var environments []string
 	if envMap != nil {
 		for key, value := range envMap {
-			environments = append(environments, fmt.Sprintf("%s=%s", key, value))
+			environments = append(environments, fmt.Sprintf("%s=%v", key, value))
 		}
 	}
 	ocisCmd.Env = append(ocisCmd.Env, environments...)
