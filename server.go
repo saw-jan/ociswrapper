@@ -6,7 +6,10 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"ociswrapper/common"
 	"ociswrapper/ocis"
+	"os"
+	"strings"
 	"sync"
 )
 
@@ -104,11 +107,21 @@ func serve() {
 }
 
 func main() {
-	out, err := ocis.InitOcis()
-	if err != "" {
-		panic(err)
-	}
-	fmt.Println(out)
+	// out, err := ocis.InitOcis()
+	// if err != "" {
+	// 	panic(err)
+	// }
+	// fmt.Println(out)
 
+	// get first arg only
+	// --bin-path=/usr/bin/ocis
+	arg := strings.Split(os.Args[1:][0], "=")
+	if arg[0] != "--bin-path" {
+		panic("Invalid argument")
+	} else if arg[1] == "" {
+		panic("ocis binary path is empty")
+	}
+
+	common.SetBinPath(arg[1])
 	serve()
 }

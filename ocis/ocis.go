@@ -7,18 +7,19 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"ociswrapper/common"
 	"os"
 	"os/exec"
 	"sync"
 	"time"
 )
 
-var ocis = "/mnt/workspace/owncloud/ocis/ocis/bin/ocis"
+// var ocis = "/mnt/workspace/owncloud/ocis/ocis/bin/ocis"
 
 var ocisCmd *exec.Cmd
 
 func InitOcis() (string, string) {
-	initCmd := exec.Command(ocis, "init", "--insecure", "true")
+	initCmd := exec.Command(common.GetBinPath(), "init", "--insecure", "true")
 	log.Print(initCmd.String())
 	initCmd.Env = os.Environ()
 	// [cleanup] not required
@@ -34,7 +35,7 @@ func InitOcis() (string, string) {
 
 func StartOcis(wg *sync.WaitGroup, envMap map[string]any) {
 	defer wg.Done()
-	ocisCmd = exec.Command(ocis, "server")
+	ocisCmd = exec.Command(common.GetBinPath(), "server")
 	ocisCmd.Env = os.Environ()
 	var environments []string
 	if envMap != nil {
