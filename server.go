@@ -113,9 +113,13 @@ func main() {
 	// }
 	// fmt.Println(out)
 
+	args := os.Args[1:]
+	if len(args) == 0 {
+		panic("Please provide the binary path")
+	}
 	// get first arg only
 	// --bin-path=/usr/bin/ocis
-	arg := strings.Split(os.Args[1:][0], "=")
+	arg := strings.Split(args[0], "=")
 	if arg[0] != "--bin-path" {
 		panic("Invalid argument")
 	} else if arg[1] == "" {
