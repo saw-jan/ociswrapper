@@ -22,7 +22,7 @@ func serveCmd() *cobra.Command {
 		Use:   "serve",
 		Short: "Starts the server",
 		Run: func(cmd *cobra.Command, args []string) {
-			go ocis.StartOcis(nil)
+			go ocis.Start(nil)
 			go wrapper.Start(cmd.Flag("wrapper-port").Value.String())
 
 			// set configs
