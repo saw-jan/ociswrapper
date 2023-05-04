@@ -6,8 +6,8 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"ociswrapper/common"
 	"ociswrapper/ocis"
+	"ociswrapper/ocis/config"
 	"os"
 	"strings"
 	"sync"
@@ -126,6 +126,6 @@ func main() {
 		panic("ocis binary path is empty")
 	}
 
-	common.SetBinPath(arg[1])
+	config.Set("bin", arg[1])
 	serve()
 }

@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"ociswrapper/common"
 	"os"
 	"os/exec"
 	"sync"
 	"time"
+
+	"ociswrapper/ocis/config"
 )
 
 // var ocis = "/mnt/workspace/owncloud/ocis/ocis/bin/ocis"
@@ -19,7 +20,7 @@ import (
 var ocisCmd *exec.Cmd
 
 func InitOcis() (string, string) {
-	initCmd := exec.Command(common.GetBinPath(), "init", "--insecure", "true")
+	initCmd := exec.Command(config.Get("bin"), "init", "--insecure", "true")
 	log.Print(initCmd.String())
 	initCmd.Env = os.Environ()
 	// [cleanup] not required
@@ -35,7 +36,7 @@ func InitOcis() (string, string) {
 
 func StartOcis(wg *sync.WaitGroup, envMap map[string]any) {
 	defer wg.Done()
-	ocisCmd = exec.Command(common.GetBinPath(), "server")
+	ocisCmd = exec.Command(config.Get("bin"), "server")
 	ocisCmd.Env = os.Environ()
 	var environments []string
 	if envMap != nil {
@@ -79,7 +80,6 @@ func stopOcis() {
 }
 
 func WaitForOcis() bool {
-	url := "https://localhost:9200"
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -97,7 +97,7 @@ func WaitForOcis() bool {
 			fmt.Println(fmt.Sprintf("Timeout waiting for ocis server [%f] seconds", timeoutValue.Seconds()))
 			return false
 		default:
-			res, err := client.Get(url)
+			res, err := client.Get(config.Get("url"))
 			if err != nil {
 				fmt.Println("Waiting for ocis server...")
 			} else {
