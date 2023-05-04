@@ -2,7 +2,6 @@ package ocis
 
 import (
 	"bufio"
-	"bytes"
 	"crypto/tls"
 	"fmt"
 	"log"
@@ -15,47 +14,31 @@ import (
 	"ociswrapper/ocis/config"
 )
 
-// var ocis = "/mnt/workspace/owncloud/ocis/ocis/bin/ocis"
-
-var ocisCmd *exec.Cmd
-
-func InitOcis() (string, string) {
-	initCmd := exec.Command(config.Get("bin"), "init", "--insecure", "true")
-	log.Print(initCmd.String())
-	initCmd.Env = os.Environ()
-	// [cleanup] not required
-	initCmd.Env = append(initCmd.Env, "IDM_ADMIN_PASSWORD=admin")
-
-	var out, err bytes.Buffer
-	initCmd.Stdout = &out
-	initCmd.Stderr = &err
-	initCmd.Run()
-
-	return out.String(), err.String()
-}
+var cmd *exec.Cmd
 
 func Start(envMap map[string]any) {
 	defer common.Wg.Done()
-	ocisCmd = exec.Command(config.Get("bin"), "server")
-	ocisCmd.Env = os.Environ()
+
+	cmd = exec.Command(config.Get("bin"), "server")
+	cmd.Env = os.Environ()
 	var environments []string
 	if envMap != nil {
 		for key, value := range envMap {
 			environments = append(environments, fmt.Sprintf("%s=%v", key, value))
 		}
 	}
-	ocisCmd.Env = append(ocisCmd.Env, environments...)
+	cmd.Env = append(cmd.Env, environments...)
 
-	stderr, err := ocisCmd.StderrPipe()
+	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		fmt.Println(err)
 	}
-	stdout, err := ocisCmd.StdoutPipe()
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	err = ocisCmd.Start()
+	err = cmd.Start()
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -73,7 +56,7 @@ func Start(envMap map[string]any) {
 }
 
 func Stop() {
-	err := ocisCmd.Process.Kill()
+	err := cmd.Process.Kill()
 	if err != nil {
 		log.Panic("Cannot kill oCIS server")
 	}
