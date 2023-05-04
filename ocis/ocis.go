@@ -34,7 +34,7 @@ func InitOcis() (string, string) {
 	return out.String(), err.String()
 }
 
-func StartOcis(envMap map[string]any) {
+func Start(envMap map[string]any) {
 	defer common.Wg.Done()
 	ocisCmd = exec.Command(config.Get("bin"), "server")
 	ocisCmd.Env = os.Environ()
@@ -72,14 +72,14 @@ func StartOcis(envMap map[string]any) {
 	}
 }
 
-func stopOcis() {
+func Stop() {
 	err := ocisCmd.Process.Kill()
 	if err != nil {
-		log.Panic("Cannot kill ocis server")
+		log.Panic("Cannot kill oCIS server")
 	}
 }
 
-func WaitForOcis() bool {
+func WaitForConnection() bool {
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -94,14 +94,14 @@ func WaitForOcis() bool {
 	for {
 		select {
 		case <-timeout:
-			fmt.Println(fmt.Sprintf("Timeout waiting for ocis server [%f] seconds", timeoutValue.Seconds()))
+			fmt.Println(fmt.Sprintf("Timeout waiting for oCIS server [%f] seconds", timeoutValue.Seconds()))
 			return false
 		default:
-			res, err := client.Get(config.Get("url"))
+			_, err := client.Get(config.Get("url"))
 			if err != nil {
-				fmt.Println("Waiting for ocis server...")
+				fmt.Println("Waiting for oCIS server...")
 			} else {
-				fmt.Println(fmt.Sprintf("Ocis server is ready [%d]", res.StatusCode))
+				fmt.Println(fmt.Sprintf("oCIS server is ready to accept requests"))
 				return true
 			}
 			time.Sleep(500 * time.Millisecond)
@@ -109,12 +109,12 @@ func WaitForOcis() bool {
 	}
 }
 
-func RestartOcisServer(envMap map[string]any) bool {
-	log.Print("Restarting ocis server...")
-	stopOcis()
+func Restart(envMap map[string]any) bool {
+	log.Print("Restarting oCIS server...")
+	Stop()
 
 	common.Wg.Add(1)
-	go StartOcis(envMap)
+	go Start(envMap)
 
-	return WaitForOcis()
+	return WaitForConnection()
 }

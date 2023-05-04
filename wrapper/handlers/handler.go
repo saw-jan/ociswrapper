@@ -51,7 +51,7 @@ func SetEnvHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	ocisStatus := ocis.RestartOcisServer(environments)
+	ocisStatus := ocis.Restart(environments)
 
 	sendResponse(res, ocisStatus)
 }
@@ -62,7 +62,7 @@ func RollbackHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	ocisStatus := ocis.RestartOcisServer(nil)
+	ocisStatus := ocis.Restart(nil)
 
 	sendResponse(res, ocisStatus)
 }
