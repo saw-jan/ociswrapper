@@ -6,8 +6,6 @@ import (
 )
 
 func main() {
-	common.Wg.Add(2)
-
 	cmd.Execute()
 
 	common.Wg.Wait()

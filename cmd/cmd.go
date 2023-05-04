@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"ociswrapper/common"
 	ocis "ociswrapper/ocis"
 	ocisConfig "ociswrapper/ocis/config"
 	wrapper "ociswrapper/wrapper"
@@ -22,6 +23,8 @@ func serveCmd() *cobra.Command {
 		Use:   "serve",
 		Short: "Starts the server",
 		Run: func(cmd *cobra.Command, args []string) {
+			common.Wg.Add(2)
+
 			go ocis.Start(nil)
 			go wrapper.Start(cmd.Flag("wrapper-port").Value.String())
 
