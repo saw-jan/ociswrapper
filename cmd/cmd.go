@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"fmt"
-
+	ocis "ociswrapper/ocis"
 	ocisConfig "ociswrapper/ocis/config"
+	wrapper "ociswrapper/wrapper"
 	wrapperConfig "ociswrapper/wrapper/config"
 
 	"github.com/spf13/cobra"
@@ -22,9 +22,8 @@ func serveCmd() *cobra.Command {
 		Use:   "serve",
 		Short: "Starts the server",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println(cmd.Flag("bin").Value)
-			fmt.Println(cmd.Flag("url").Value)
-			fmt.Println(cmd.Flag("wrapper-port").Value)
+			go ocis.StartOcis(nil)
+			go wrapper.Start(cmd.Flag("wrapper-port").Value.String())
 
 			// set configs
 			ocisConfig.Set("bin", cmd.Flag("bin").Value.String())
