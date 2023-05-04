@@ -26,6 +26,8 @@ func Start(port string) {
 
 	httpServer.Handler = mux
 
+	log.Printf("Starting server on port %s...", port)
+
 	err := httpServer.ListenAndServe()
 	if err != nil {
 		log.Panic(err)
