@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"sync"
 	"time"
 
+	"ociswrapper/common"
 	"ociswrapper/ocis/config"
 )
 
@@ -34,8 +34,8 @@ func InitOcis() (string, string) {
 	return out.String(), err.String()
 }
 
-func StartOcis(wg *sync.WaitGroup, envMap map[string]any) {
-	defer wg.Done()
+func StartOcis(envMap map[string]any) {
+	defer common.Wg.Done()
 	ocisCmd = exec.Command(config.Get("bin"), "server")
 	ocisCmd.Env = os.Environ()
 	var environments []string
@@ -109,10 +109,12 @@ func WaitForOcis() bool {
 	}
 }
 
-func RestartOcisServer(wg *sync.WaitGroup, envMap map[string]any) bool {
+func RestartOcisServer(envMap map[string]any) bool {
 	log.Print("Restarting ocis server...")
 	stopOcis()
-	wg.Add(1)
-	go StartOcis(wg, envMap)
+
+	common.Wg.Add(1)
+	go StartOcis(envMap)
+
 	return WaitForOcis()
 }

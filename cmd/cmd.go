@@ -3,7 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"ociswrapper/ocis/config"
+	ocisConfig "ociswrapper/ocis/config"
+	wrapperConfig "ociswrapper/wrapper/config"
 
 	"github.com/spf13/cobra"
 )
@@ -26,16 +27,16 @@ func serveCmd() *cobra.Command {
 			fmt.Println(cmd.Flag("wrapper-port").Value)
 
 			// set configs
-			config.Set("bin", cmd.Flag("bin").Value.String())
-			config.Set("url", cmd.Flag("url").Value.String())
+			ocisConfig.Set("bin", cmd.Flag("bin").Value.String())
+			ocisConfig.Set("url", cmd.Flag("url").Value.String())
 		},
 	}
 
 	// serve command args
 	serveCmd.Flags().SortFlags = false
-	serveCmd.Flags().StringP("bin", "", config.Get("bin"), "Full oCIS binary path")
-	serveCmd.Flags().StringP("url", "", config.Get("url"), "oCIS server url")
-	serveCmd.Flags().StringP("wrapper-port", "p", "5000", "Wrapper API server port")
+	serveCmd.Flags().StringP("bin", "", ocisConfig.Get("bin"), "Full oCIS binary path")
+	serveCmd.Flags().StringP("url", "", ocisConfig.Get("url"), "oCIS server url")
+	serveCmd.Flags().StringP("wrapper-port", "p", wrapperConfig.Get("port"), "Wrapper API server port")
 
 	return serveCmd
 }
