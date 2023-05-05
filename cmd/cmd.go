@@ -26,7 +26,7 @@ func serveCmd() *cobra.Command {
 			common.Wg.Add(2)
 
 			go ocis.Start(nil)
-			go wrapper.Start(cmd.Flag("wrapper-port").Value.String())
+			go wrapper.Start(cmd.Flag("port").Value.String())
 
 			// set configs
 			ocisConfig.Set("bin", cmd.Flag("bin").Value.String())
@@ -38,7 +38,7 @@ func serveCmd() *cobra.Command {
 	serveCmd.Flags().SortFlags = false
 	serveCmd.Flags().StringP("bin", "", ocisConfig.Get("bin"), "Full oCIS binary path")
 	serveCmd.Flags().StringP("url", "", ocisConfig.Get("url"), "oCIS server url")
-	serveCmd.Flags().StringP("wrapper-port", "p", wrapperConfig.Get("port"), "Wrapper API server port")
+	serveCmd.Flags().StringP("port", "p", wrapperConfig.Get("port"), "Wrapper API server port")
 
 	return serveCmd
 }
